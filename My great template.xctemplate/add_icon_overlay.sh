@@ -56,16 +56,30 @@ function generateIcon () {
   rm -f resizedRibbon.png
 }
 
-generateIcon "Icon-60@2x.png" "AppIcon60x60@2x.png"
-generateIcon "Icon-60@3x.png" "AppIcon60x60@3x.png"
-generateIcon "Icon-Spotlight-40.png" "AppIcon40x40~ipad.png"
-generateIcon "Icon-Spotlight-40@2x.png" "AppIcon40x40@2x.png"
-generateIcon "Icon-Spotlight-40@2x-1.png" "AppIcon40x40@2x~ipad.png"
-generateIcon "Icon-Spotlight-40@3x.png" "AppIcon40x40@3x.png"
-generateIcon "Icon-Small.png" "AppIcon29x29~ipad.png"
-generateIcon "Icon-Small@2x-1.png" "AppIcon29x29@2x~ipad.png"
-generateIcon "Icon-Small@2x.png" "AppIcon29x29@2x.png"
-generateIcon "Icon-Small@3x.png" "AppIcon29x29@3x.png"
-generateIcon "Icon-76.png" "AppIcon76x76~ipad.png"
-generateIcon "Icon-76@2x.png" "AppIcon76x76@2x~ipad.png"
-generateIcon "Icon-iPadPro@2x.png.png" "AppIcon83.5x83.5@2x~ipad.png"
+function findIconFiles(){
+  JSON_FILE="$(find ${SRCROOT} -name AppIcon.appiconset)/Contents.json"
+  JSON_CONTENT=`cat $JSON_FILE | tr -d '\n' | tr '{' '\n'` #one icon per line
+
+  for line in $JSON_CONTENT; do
+    ICON_SIZE=`echo $line | cut -d \" -f 4`
+    ICON_IDIOM=`echo $line | cut -d \" -f 8`
+    ORIG_FILENAME=`echo $line | cut -d \" -f 12`
+    ICON_SCALE=`echo $line | cut -d \" -f 16`
+
+    if [ "${ORIG_FILENAME}x" != "x" ]; then
+      DESTINATION_FILENAME="AppIcon${ICON_SIZE}"
+      if [[ ("${ICON_SCALE}" == "2x" || "${ICON_SCALE}" == "3x") ]]; then
+        DESTINATION_FILENAME="${DESTINATION_FILENAME}@${ICON_SCALE}"
+      fi
+      if [[ "${ICON_IDIOM}" == "ipad" ]]; then
+        DESTINATION_FILENAME="${DESTINATION_FILENAME}~ipad"
+      fi
+      DESTINATION_FILENAME="${DESTINATION_FILENAME}.png"
+
+      echo "generateIcon ${ORIG_FILENAME} ${DESTINATION_FILENAME}"
+      generateIcon ${ORIG_FILENAME} ${DESTINATION_FILENAME} # process icon
+    fi
+  done
+}
+
+findIconFiles;
